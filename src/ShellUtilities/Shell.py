@@ -6,13 +6,16 @@ from ShellUtilities.ShellCommandResults import ShellCommandResults
 
 logger = logging.getLogger(__name__).parent
 
-def execute_shell_command(command, max_retries=1, retry_delay=1):
+def execute_shell_command(command, max_retries=1, retry_delay=1, env=None):
 
     logging.debug("Running shell command:")
     logging.debug(command)
 
     for i in range(0, max_retries):
-        process = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        if env:
+            process = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
+        else:
+            process = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         (stdout, stderr) = process.communicate()
         exitcode = process.returncode
 
