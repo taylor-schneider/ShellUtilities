@@ -3,19 +3,31 @@ import logging
 import time
 from ShellUtilities.ShellCommandException import ShellCommandException
 from ShellUtilities.ShellCommandResults import ShellCommandResults
+import os
 
 logger = logging.getLogger(__name__).parent
 
-def execute_shell_command(command, max_retries=1, retry_delay=1, env=None):
+def execute_shell_command(command, max_retries=1, retry_delay=1, env=None, cwd=None):
 
     logging.debug("Running shell command:")
     logging.debug(command)
 
     for i in range(0, max_retries):
+        args = [command]
+        kwargs = {
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE,
+            "shell": True
+        }
         if env:
-            process = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
-        else:
-            process = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            kwargs["evv"] = env
+        if cwd:
+            if os.path.isdir(cwd):
+                kwargs["cwd"] = cwd
+            else:
+                raise Exception("The working directory '{0}' does not exist.".format(cwd))
+
+        process = subprocess.Popen(*args, **kwargs)
         (stdout, stderr) = process.communicate()
         exitcode = process.returncode
 
