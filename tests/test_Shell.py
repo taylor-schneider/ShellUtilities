@@ -73,7 +73,7 @@ class Test_Shell(TestCase):
         self.assertEqual(0, len(stderr))
 
     def test__handle_asynchronous_output__success(self):
-        shell_command_string = r"echo 'a'; sleep 2; echo 'b'"
+        shell_command_string = r"echo 'a'; sleep 2; echo 'b'; sleep 2; echo 'c'; sleep 2; echo 'd';"
         process = Shell.execute_shell_command(shell_command_string, blocking=False)
         stdout = []
         stderr = []
@@ -86,7 +86,9 @@ class Test_Shell(TestCase):
         exit_code = process.returncode
         pid = process.pid
 
+        self.assertEqual(0, process.poll())
+        self.assertFalse(thread.is_alive())
         self.assertEqual(0, exit_code)
         self.assertTrue(pid > 0)
-        self.assertEqual(2, len(stdout))
+        self.assertEqual(4, len(stdout))
         self.assertEqual(0, len(stderr))

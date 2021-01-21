@@ -117,11 +117,13 @@ def __capture_output(process, stdout_func, stderr_func):
         output_found = False
         if stdout_line:
             stdout_func(stdout_line)
+            output_found = True
         if stderr_line:
             stderr_func(stderr_line)
+            output_found = True
 
         poll = process.poll()
-        process_alive = poll is None
+        process_alive = poll == None
 
         if not output_found and not process_alive:
             break
@@ -139,5 +141,6 @@ def handle_asynchronous_output(process, stdout_func, stderr_func):
 
 def wait(shell_process, output_handling_thread):
     shell_process.wait()
-    while output_handling_thread.isAlive():
+    while output_handling_thread.is_alive():
         time.sleep(0.5)
+    time.sleep(2.5)
