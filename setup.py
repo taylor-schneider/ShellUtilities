@@ -12,10 +12,10 @@ with open('README.md', "r") as fh:
 
 setuptools.setup(
     name="ShellUtilities",
-    version="1.0.0",
+    version="2.0.0",
     author="tschneider",
     author_email="tschneider@live.com",
-    description="A library for interacting with the shell.",
+    description="A library for executing shell commands in either a blocking or non-blocking way.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(source_code_dir),
@@ -23,7 +23,6 @@ setuptools.setup(
         "": source_code_dir
     },
     classifiers=[
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 	    "Operating System :: OS Independent"
