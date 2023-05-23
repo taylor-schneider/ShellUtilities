@@ -10,9 +10,9 @@ import asyncio
 
 logger = logging.getLogger(__name__).parent
 
-def __execute_shell_command(command, env, cwd):
+def __execute_shell_command(command, env, cwd, executable=None):
     # Create the process and wait for the exit
-    process = __execute_shell_command_async(command, env, cwd)
+    process = __execute_shell_command_async(command, env, cwd, executable)
     (stdout, stderr) = process.communicate()
     exitcode = process.returncode
 
@@ -27,15 +27,19 @@ def __execute_shell_command(command, env, cwd):
     return exitcode, stdout, stderr
 
 
-def __execute_shell_command_async(command, env, cwd):
+def __execute_shell_command_async(command, env, cwd, executable=None):
 
     args = [command]
     kwargs = {
         "stdout": subprocess.PIPE,
         "stderr": subprocess.PIPE,
         "shell": True,
-        "close_fds": 'posix'
+        "close_fds": 'posix',
     }
+    logging.debug(f"Executable set to: {executable}")
+
+    if executable:
+        kwargs["executable"] = executable
     if env:
         kwargs["env"] = env
     if cwd:
@@ -47,7 +51,7 @@ def __execute_shell_command_async(command, env, cwd):
     return process
 
 
-def execute_shell_command(command, max_retries=1, retry_delay=1, env=None, cwd=None, blocking=True):
+def execute_shell_command(command, max_retries=1, retry_delay=1, env=None, cwd=None, blocking=True, executable=None):
 
     try:
 
@@ -61,9 +65,9 @@ def execute_shell_command(command, max_retries=1, retry_delay=1, env=None, cwd=N
 
             # Run the shell command
             if blocking:
-                exitcode, stdout_string, stderr_string = __execute_shell_command(command, env, cwd)
+                exitcode, stdout_string, stderr_string = __execute_shell_command(command, env, cwd, executable)
             else:
-                process = __execute_shell_command_async(command, env, cwd)
+                process = __execute_shell_command_async(command, env, cwd, executable)
                 return process
 
             # Set the exit code and return
@@ -189,6 +193,7 @@ def handle_asynchronous_output(process, stdout_func, stderr_func):
 
     threads = (stdout_enqueue_thread, stderr_enqueue_thread, stdout_read_thread, stderr_read_thread)
     return threads
+
 
 def wait(shell_process, output_handling_threads):
 
