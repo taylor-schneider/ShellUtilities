@@ -7,8 +7,11 @@ import os
 import threading
 import queue
 import asyncio
+import json
+
 
 logger = logging.getLogger(__name__).parent
+
 
 def __execute_shell_command(command, env, cwd, executable=None):
     # Create the process and wait for the exit
@@ -36,18 +39,20 @@ def __execute_shell_command_async(command, env, cwd, executable=None):
         "shell": True,
         "close_fds": 'posix',
     }
-    logging.debug(f"Executable set to: {executable}")
-
     if executable:
+        logging.debug(f"Executable set to: {executable}")
         kwargs["executable"] = executable
     if env:
+        logging.debug(f"Environment set to: " + os.linesep + json.dumps(env, indent = 4))
         kwargs["env"] = env
     if cwd:
+        logging.debug(f"CWD set to: {cwd}")
         kwargs["cwd"] = cwd
 
     # Create the process
     process = subprocess.Popen(*args, **kwargs)
 
+    logging.debug("Process opened.")
     return process
 
 
