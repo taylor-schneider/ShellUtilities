@@ -12,7 +12,7 @@ with open('README.md', "r") as fh:
 
 setuptools.setup(
     name="ShellUtilities",
-    version="2.1.2",
+    version="2.1.3",
     author="tschneider",
     author_email="tschneider@live.com",
     description="A library for executing shell commands in either a blocking or non-blocking way.",
