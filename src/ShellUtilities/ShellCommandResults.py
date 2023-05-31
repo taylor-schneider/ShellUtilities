@@ -98,14 +98,14 @@ class AsynchronousShellCommandResults(ShellCommandResults):
                         line = line.decode()
                         line = line.rstrip("\n")
                         buffer_handler_func(line)
-                process_running = process.poll() != 0
+                process_running = process.poll() != None
 
         self.stdout_thread = threading.Thread(target=handle_output_line, args=(process.stdout, self._handle_stdout_line))
         self.stderr_thread = threading.Thread(target=handle_output_line, args=(process.stderr, self._handle_stderr_line))
         self.stdout_thread.start()
         self.stderr_thread.start()
 
-    def process_running(self):
+    def command_running(self):
         poll = self.process.poll()
         if not poll:
             return False
