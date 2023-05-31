@@ -1,5 +1,6 @@
 from unittest import TestCase
 from ShellUtilities import Shell
+from ShellUtilities.ShellCommandResults import ShellCommandResults
 import platform
 import os
 import time
@@ -47,39 +48,16 @@ class Test_Shell(TestCase):
 
     def test__execute_shell_command__success__non_blocking(self):
         shell_command_string = r"echo 'a'; sleep 2; echo 'b'"
-        process = Shell.execute_shell_command(shell_command_string, blocking=False)
-        stdout = []
-        stderr = []
+        shell_command_results = Shell.execute_shell_command(shell_command_string, blocking=False)
+        shell_command_results.wait()
 
-        while True:
-            stdout_line = process.stdout.readline().decode().strip("\n")
-            stderr_line = process.stderr.readline().decode().strip("\n")
-            output_found = False
-            if stdout_line:
-                output_found = True
-                stdout.append(stdout_line)
-                print(stdout_line)
-            if stderr_line:
-                output_found = True
-                stderr.append(stderr_line)
-                print(stderr_line)
-
-            poll = process.poll()
-            process_alive = poll is None
-
-            if not output_found and not process_alive:
-                break
-
-            print("Waiting...")
-            time.sleep(2)
-
-        exit_code = process.returncode
-        pid = process.pid
-
-        self.assertEqual(0, exit_code)
-        self.assertTrue(pid > 0)
-        self.assertEqual(2, len(stdout))
-        self.assertEqual(0, len(stderr))
+        self.assertEqual(0, shell_command_results.exit_code)
+        self.assertTrue(shell_command_results.pid > 0)
+        self.assertIsNotNone(shell_command_results.Stdout)
+        self.assertEqual("a" + os.linesep + "b" + os.linesep, shell_command_results.Stdout)
+        self.assertEqual("", shell_command_results.Stderr)
+        self.assertEqual(2, len(shell_command_results.stdout_lines))
+        self.assertEqual(0, len(shell_command_results.stderr_lines))
 
     def test__execute_shell_command__success__default_shell(self):
         shell_command_string = 'echo "$SHELL"'

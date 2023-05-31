@@ -2,7 +2,7 @@ import subprocess
 import logging
 import time
 from ShellUtilities.ShellCommandException import ShellCommandException
-from ShellUtilities.ShellCommandResults import ShellCommandResults
+from ShellUtilities.ShellCommandResults import ShellCommandResults, AsynchronousShellCommandResults
 import os
 import threading
 import queue
@@ -73,7 +73,7 @@ def execute_shell_command(command, max_retries=1, retry_delay=1, env=None, cwd=N
                 exitcode, stdout_string, stderr_string = __execute_shell_command(command, env, cwd, executable)
             else:
                 process = __execute_shell_command_async(command, env, cwd, executable)
-                return process
+                return AsynchronousShellCommandResults(command, process)
 
             # Set the exit code and return
             if exitcode == 0:
@@ -145,6 +145,7 @@ def handle_asynchronous_output(process, stdout_func, stderr_func):
     #
     #   https://stackoverflow.com/questions/375427/a-non-blocking-read-on-a-subprocess-pipe-in-python
     #
+
 
     stdout_lock = threading.Lock()
     stderr_lock = threading.Lock()
