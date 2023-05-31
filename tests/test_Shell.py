@@ -50,7 +50,7 @@ class Test_Shell(TestCase):
         shell_command_string = r"echo 'a'; sleep 2; echo 'b'"
         shell_command_results = Shell.execute_shell_command(shell_command_string, blocking=False)
         shell_command_results.wait()
-        self.assertFalse(shell_command_results.process_running())
+        self.assertFalse(shell_command_results.command_running())
         self.assertEqual(0, shell_command_results.ExitCode)
         self.assertTrue(shell_command_results.pid > 0)
         self.assertIsNotNone(shell_command_results.Stdout)
@@ -94,7 +94,7 @@ class Test_Shell(TestCase):
         shell_command_results = Shell.execute_shell_command(shell_command_string, blocking=False)
         shell_command_results.wait()
         self.assertEqual(0, shell_command_results.process.poll())
-        self.assertFalse(shell_command_results.process_running())
+        self.assertFalse(shell_command_results.command_running())
         self.assertEqual(0, shell_command_results.ExitCode)
         self.assertTrue(shell_command_results.pid > 0)
         self.assertEqual(4, len(shell_command_results.stdout_lines))
@@ -109,9 +109,23 @@ class Test_Shell(TestCase):
         shell_command_results.wait()
 
         self.assertEqual(0, shell_command_results.process.poll())
-        self.assertFalse(shell_command_results.process_running())
-        self.assertEqual(0, shell_command_results.process.poll())
+        self.assertFalse(shell_command_results.command_running())
         self.assertEqual(0, shell_command_results.ExitCode)
         self.assertTrue(shell_command_results.pid > 0)
         self.assertEqual(25, len(shell_command_results.stdout_lines))
         self.assertEqual(2, len(shell_command_results.stderr_lines))
+
+    def test__handle_asynchronous_output__failure__python_script_raise_exception(self):
+        # Run a script that takes 25 seconds to run and prints info to the stdout and stderr
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(current_directory, "scripts", "fail.py")
+        shell_command_string = f"python3 '{script_path}'"
+        shell_command_results = Shell.execute_shell_command(shell_command_string, blocking=False)
+        shell_command_results.wait()
+
+        self.assertEqual(1, shell_command_results.process.poll())
+        self.assertFalse(shell_command_results.command_running())
+        self.assertEqual(1, shell_command_results.ExitCode)
+        self.assertTrue(shell_command_results.pid > 0)
+        self.assertEqual(0, len(shell_command_results.stdout_lines))
+        self.assertEqual(4, len(shell_command_results.stderr_lines))
