@@ -50,8 +50,8 @@ class Test_Shell(TestCase):
         shell_command_string = r"echo 'a'; sleep 2; echo 'b'"
         shell_command_results = Shell.execute_shell_command(shell_command_string, blocking=False)
         shell_command_results.wait()
-
-        self.assertEqual(0, shell_command_results.exit_code)
+        self.assertFalse(shell_command_results.process_running())
+        self.assertEqual(0, shell_command_results.ExitCode)
         self.assertTrue(shell_command_results.pid > 0)
         self.assertIsNotNone(shell_command_results.Stdout)
         self.assertEqual("a" + os.linesep + "b" + os.linesep, shell_command_results.Stdout)
@@ -91,59 +91,27 @@ class Test_Shell(TestCase):
 
     def test__handle_asynchronous_output__success__shell_command(self):
         shell_command_string = r"echo 'a'; sleep 2; echo 'b'; sleep 2; echo 'c'; sleep 2; echo 'd';"
-        process = Shell.execute_shell_command(shell_command_string, blocking=False)
-        stdout = []
-        stderr = []
-        def stdout_func(stdout_line):
-            print(stdout_line)
-            stdout.append(stdout_line)
-        def stderr_func(stderr_line):
-            print(stderr_line)
-            stderr.append(stderr_line)
-
-        threads = Shell.handle_asynchronous_output(process, stdout_func, stderr_func)
-        Shell.wait(process, threads)
-
-        exit_code = process.returncode
-        pid = process.pid
-
-        self.assertEqual(0, process.poll())
-        self.assertFalse(threads[0].is_alive())
-        self.assertFalse(threads[1].is_alive())
-        self.assertFalse(threads[2].is_alive())
-        self.assertFalse(threads[3].is_alive())
-        self.assertEqual(0, exit_code)
-        self.assertTrue(pid > 0)
-        self.assertEqual(4, len(stdout))
-        self.assertEqual(0, len(stderr))
+        shell_command_results = Shell.execute_shell_command(shell_command_string, blocking=False)
+        shell_command_results.wait()
+        self.assertEqual(0, shell_command_results.process.poll())
+        self.assertFalse(shell_command_results.process_running())
+        self.assertEqual(0, shell_command_results.ExitCode)
+        self.assertTrue(shell_command_results.pid > 0)
+        self.assertEqual(4, len(shell_command_results.stdout_lines))
+        self.assertEqual(0, len(shell_command_results.stderr_lines))
 
     def test__handle_asynchronous_output__success__script_using_module_code(self):
         # Run a script that takes 25 seconds to run and prints info to the stdout and stderr
         current_directory = os.path.dirname(os.path.abspath(__file__))
         script_path = os.path.join(current_directory, "scripts", "loop.sh")
         shell_command_string = "bash '{0}'".format(script_path)
-        process = Shell.execute_shell_command(shell_command_string, blocking=False)
-        stdout = []
-        stderr = []
-        def stdout_func(line):
-            print(line)
-            stdout.append(line)
-        def stderr_func(line):
-            print(line)
-            stderr.append(line)
-        threads = Shell.handle_asynchronous_output(process, stdout_func, stderr_func)
-        Shell.wait(process, threads)
+        shell_command_results = Shell.execute_shell_command(shell_command_string, blocking=False)
+        shell_command_results.wait()
 
-        exit_code = process.returncode
-        pid = process.pid
-
-        self.assertEqual(0, process.poll())
-        self.assertFalse(threads[0].is_alive())
-        self.assertFalse(threads[1].is_alive())
-        self.assertFalse(threads[2].is_alive())
-        self.assertFalse(threads[3].is_alive())
-        self.assertEqual(0, process.poll())
-        self.assertEqual(0, exit_code)
-        self.assertTrue(pid > 0)
-        self.assertEqual(25, len(stdout))
-        self.assertEqual(2, len(stderr))
+        self.assertEqual(0, shell_command_results.process.poll())
+        self.assertFalse(shell_command_results.process_running())
+        self.assertEqual(0, shell_command_results.process.poll())
+        self.assertEqual(0, shell_command_results.ExitCode)
+        self.assertTrue(shell_command_results.pid > 0)
+        self.assertEqual(25, len(shell_command_results.stdout_lines))
+        self.assertEqual(2, len(shell_command_results.stderr_lines))

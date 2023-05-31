@@ -127,4 +127,4 @@ class AsynchronousShellCommandResults(ShellCommandResults):
         self.process.stdout.close()
         self.process.stderr.close()
 
-        self.exit_code = self.process.returncode
+        self.ExitCode = self.process.returncode
