@@ -106,8 +106,8 @@ class AsynchronousShellCommandResults(ShellCommandResults):
 
     def command_running(self):
         poll = self.process.poll()
-        if not poll:
-            return False
+        if poll == None:
+            return True
         return self.stdout_thread.is_alive() or self.stderr_thread.is_alive()
 
     def wait(self, raise_on_error=True):
