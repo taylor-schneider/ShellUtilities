@@ -1,7 +1,7 @@
 import threading
 import os
 import time
-
+from ShellUtilities.ShellCommandException import AsynchronousShellCommandException
 
 class ShellCommandResults():
 
@@ -10,7 +10,6 @@ class ShellCommandResults():
         self.Stdout = stdout
         self.Stderr = stderr
         self.ExitCode = exitcode
-
 
 class AsynchronousShellCommandResults(ShellCommandResults):
 
@@ -111,7 +110,7 @@ class AsynchronousShellCommandResults(ShellCommandResults):
             return False
         return self.stdout_thread.is_alive() or self.stderr_thread.is_alive()
 
-    def wait(self):
+    def wait(self, raise_on_error=True):
 
         # This is a blocking function which will safely wait for the shell process and handling threads to complete
 
@@ -128,3 +127,6 @@ class AsynchronousShellCommandResults(ShellCommandResults):
         self.process.stderr.close()
 
         self.ExitCode = self.process.returncode
+        
+        if raise_on_error and self.ExitCode != 0:
+            raise AsynchronousShellCommandException(self)
