@@ -56,7 +56,7 @@ def __execute_shell_command_async(command, env, cwd, executable=None):
     return process
 
 
-def execute_shell_command(command, max_retries=1, retry_delay=1, env=None, cwd=None, blocking=True, executable=None):
+def execute_shell_command(command, max_retries=1, retry_delay=1, env=None, cwd=None, blocking=True, executable=None, async_buffer_funcs={}):
 
     try:
 
@@ -73,7 +73,7 @@ def execute_shell_command(command, max_retries=1, retry_delay=1, env=None, cwd=N
                 exitcode, stdout_string, stderr_string = __execute_shell_command(command, env, cwd, executable)
             else:
                 process = __execute_shell_command_async(command, env, cwd, executable)
-                return AsynchronousShellCommandResults(command, process)
+                return AsynchronousShellCommandResults(command, process, async_buffer_funcs)
 
             # Set the exit code and return
             if exitcode == 0:

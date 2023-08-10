@@ -8,7 +8,8 @@ import threading
 import queue
 import tracemalloc
 import logging
-
+import io
+import sys
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -17,6 +18,14 @@ tracemalloc.start()
 
 
 class Test_Shell(TestCase):
+
+    def test__execute_shell_command__success__print_env_var(self):
+        shell_command_string = "echo $MYVAR"
+        shell_command_result = Shell.execute_shell_command(shell_command_string, env={"MYVAR": "Hello, World!"})
+        self.assertEqual(0, shell_command_result.ExitCode)
+        self.assertEqual("", shell_command_result.Stderr)
+        self.assertNotEqual("", shell_command_result.Stdout)
+
 
     def test__execute_shell_command__success__simple_pwd(self):
         system_name = platform.system()
@@ -138,3 +147,71 @@ class Test_Shell(TestCase):
         self.assertEqual(0, len(shell_command_exception.stdout_lines))
         self.assertEqual(4, len(shell_command_exception.stderr_lines))
 
+    def test__handle_asynchronous_output__success__shell_command_custom_pipes(self):
+        
+        # Create a dummy string buffer to replace the default stdout
+        # so that we can monitor the output of our test and show
+        # that it executes asynchrously
+        old_stdout = sys.stdout
+        my_buffer = io.StringIO()
+        sys.stdout = my_buffer
+        
+        try:
+            
+            # Define an async function to use when we execute the shell command
+            def stdout_func(stdout_line):
+                my_buffer.write(stdout_line + os.linesep)
+                
+            # Run the command and also output while the command is running
+            shell_command_string = r"echo 'a'; sleep 2; echo 'b'; sleep 2; echo 'c'; sleep 2; echo 'd';"
+            shell_command_results = Shell.execute_shell_command(shell_command_string, blocking=False, async_buffer_funcs={"stdout": [stdout_func]})
+            time.sleep(1)
+            print("hello")
+            shell_command_results.wait()
+            
+            # Extract the output from stdout
+            my_buffer.seek(0) # go to the start of the buffer
+            output = my_buffer.readlines()
+            
+            # Show it ran async
+            printed_message = "hello" + os.linesep
+            self.assertTrue(printed_message in output)
+            self.assertNotEqual(printed_message, output[0])
+            self.assertNotEqual(printed_message, output[-1])
+
+            
+            # Do the normal checks
+            self.assertEqual(0, shell_command_results.process.poll())
+            self.assertFalse(shell_command_results.command_running())
+            self.assertEqual(0, shell_command_results.ExitCode)
+            self.assertTrue(shell_command_results.pid > 0)
+            self.assertEqual(4, len(shell_command_results.stdout_lines))
+            self.assertEqual(0, len(shell_command_results.stderr_lines))
+        finally:
+            # Set the buffer back
+            sys.stdout = old_stdout
+
+    def test__handle_asynchronous_output__success__shell_command_custom_pipes2(self):
+            
+            # This is really just to see the output in the command line when running manually
+            # It's a sanity check for the prior test
+            
+            # Define an async function to use when we execute the shell command
+            def stdout_func(stdout_line):
+                print(stdout_line)
+                
+            # Run the command and also output while the command is running
+            shell_command_string = r"echo 'a'; sleep 2; echo 'b'; sleep 2; echo 'c'; sleep 2; echo 'd';"
+            shell_command_results = Shell.execute_shell_command(shell_command_string, blocking=False, async_buffer_funcs={"stdout": [stdout_func]})
+            time.sleep(1)
+            print("hello")
+            shell_command_results.wait()
+            
+
+            # Do the normal checks
+            self.assertEqual(0, shell_command_results.process.poll())
+            self.assertFalse(shell_command_results.command_running())
+            self.assertEqual(0, shell_command_results.ExitCode)
+            self.assertTrue(shell_command_results.pid > 0)
+            self.assertEqual(4, len(shell_command_results.stdout_lines))
+            self.assertEqual(0, len(shell_command_results.stderr_lines))

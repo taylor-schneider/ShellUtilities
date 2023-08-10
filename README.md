@@ -19,13 +19,37 @@ In the event of a failure, the function will raise a [ShellCommandException](src
 
 # Getting Started
 
-Here is an example of the typical use case for this utility:
+Here is an example of the simple use case for this utility:
 
 ```
 from ShellUtilities import Shell
 
-scr = Shell.execute_shell_command("myscript.sh", cwd="/tmp", env={"MYVAR": "Hello, World!"})
-scr.ExitCode == 0
-print(scr.StdOut)
-print(scr.StdOut)
+shell_command_results = Shell.execute_shell_command("echo $MYVAR", env={"MYVAR": "Hello, World!"})
+shell_command_results.ExitCode == 0
+print(shell_command_results.StdOut) # Hello, World!
+print(shell_command_results.Stderr)
+```
+
+And here is a more complex example of this utility running a long command asynchronously while piping the output to stdout in real time:
+
+```
+from ShellUtilities import Shell
+
+# Define an async function to use when we execute the shell command
+def stdout_func(stdout_line):
+    print(stdout_line)
+    
+# Run the command and also output while the command is running
+shell_command_string = r"echo 'a'; sleep 2; echo 'b'; sleep 2; echo 'c'; sleep 2; echo 'd';"
+shell_command_results = Shell.execute_shell_command(shell_command_string, blocking=False, async_buffer_funcs={"stdout": [stdout_func]})
+time.sleep(1)
+print("hello")
+shell_command_results.wait()
+
+# The output of this main thread will be:
+# a
+# hello
+# b
+# c
+# d
 ```

@@ -13,7 +13,7 @@ class ShellCommandResults():
 
 class AsynchronousShellCommandResults(ShellCommandResults):
 
-    def __init__(self, command, process):
+    def __init__(self, command, process, async_buffer_funcs):
         # Create vars for handling process output
         self.process = process
         self.stdout_lines = []
@@ -23,6 +23,7 @@ class AsynchronousShellCommandResults(ShellCommandResults):
         self.pid = process.pid
         self.stdout_thread = None
         self.stderr_thread = None
+        self.async_buffer_funcs = async_buffer_funcs
         
         # Call the parent constructor
         stdout = ""
@@ -33,11 +34,19 @@ class AsynchronousShellCommandResults(ShellCommandResults):
         # Start handling the asynchronous output
         self.handle_asynchronous_output(self.process)
     
+    # This function will be automatgically wired up to fire whenever a line is read from the stdout buffer
+    # of the process that is created.
     def _handle_stdout_line(self, line):
         try:
             self.stdout_lock.acquire()
+            # Append to the default output array
             self.stdout_lines.append(line)
+            # Append to the default string
             self.Stdout += line + os.linesep
+            # Call any attached methods
+            if "stdout" in self.async_buffer_funcs.keys():
+                for func in self.async_buffer_funcs["stdout"]:
+                    func(line)
         finally:
             self.stdout_lock.release()
             
@@ -46,6 +55,9 @@ class AsynchronousShellCommandResults(ShellCommandResults):
             self.stderr_lock.acquire()
             self.stderr_lines.append(line)
             self.Stderr += line + os.linesep
+            if "stderr" in self.async_buffer_funcs.keys():
+                for func in self.async_buffer_funcs["stderr"]:
+                    func(line)
         finally:
             self.stderr_lock.release()
         
