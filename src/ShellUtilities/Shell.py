@@ -75,8 +75,16 @@ def execute_shell_command(command, max_retries=1, retry_delay=1, env=None, cwd=N
                 process = __execute_shell_command_async(command, env, cwd, executable)
                 return AsynchronousShellCommandResults(command, process, async_buffer_funcs)
 
-            # Set the exit code and return
+            # If successful, return the results
             if exitcode == 0:
+                logging.debug("Command STDOUT:")
+                for line in stdout_string.split("\n"):
+                    if line:
+                        logging.debug(line)
+                logging.debug("Command STDERR:")
+                for line in stderr_string.split("\n"):
+                    if line:
+                        logging.error(line)
                 return ShellCommandResults(command, stdout_string, stderr_string, exitcode)
 
             # If an error occured we need to determine if this is the last retry attempt
